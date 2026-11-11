@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Case Archive & Results - NeuroScan AI{% endblock %}
+
+{% block content %}
+<div class="results-page">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="page-title mb-1">
+                <i class="bi bi-clipboard2-pulse"></i> Diagnostic Archive & Search
+            </h1>
+            <p class="text-secondary mb-0">Browse and filter historical patient MRI and CT stroke analyses.</p>
+        </div>
+        <a href="{% url 'upload_scan' %}" class="btn btn-primary">
+            <i class="bi bi-cloud-arrow-up"></i> Upload New Scan
+        </a>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-4">
+                    <h5 class="mb-0"><i class="bi bi-funnel-fill text-primary"></i> Filter Diagnostic Cases</h5>
+                </div>
+                <div class="col-lg-8">
+                    <form method="GET" class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                        <select name="filter" class="form-select form-select-sm" style="width: auto;">
+                            <option value="">All Findings</option>
+                            <option value="stroke" {% if filter_type == 'stroke' %}selected{% endif %}>Positive: Stroke Detected</option>
+                            <option value="no_stroke" {% if filter_type == 'no_stroke' %}selected{% endif %}>Negative: No Stroke (Normal)</option>
+                            <option value="ischemic" {% if filter_type == 'ischemic' %}selected{% endif %}>Subtype: Ischemic</option>
+                            <option value="hemorrhagic" {% if filter_type == 'hemorrhagic' %}selected{% endif %}>Subtype: Hemorrhagic</option>
+                        </select>
+                        <input type="date" name="start_date" class="form-control form-control-sm" style="width: 140px;" placeholder="Start Date" value="{{ request.GET.start_date }}">
+                        <input type="date" name="end_date" class="form-control form-control-sm" style="width: 140px;" placeholder="End Date" value="{{ request.GET.end_date }}">
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="bi bi-search"></i> Apply
+                        </button>
+                        {% if filter_type or request.GET.start_date or request.GET.end_date %}
+                        <a href="{% url 'results' %}" class="btn btn-sm btn-outline-secondary">Clear</a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Demographics</th>
+                            <th>Modality</th>
+                            <th>Diagnostic Finding</th>
+                            <th>Subtype</th>
+                            <th>Confidence</th>
+                            <th>Evaluated On</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in page_obj %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="user-avatar-circle" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                        {{ result.scan.patient.name|make_list|first|upper }}
+                                    </div>
+                                    <a href="{% url 'patient_detail' result.scan.patient.id %}" class="fw-bold text-decoration-none">
+                                        {{ result.scan.patient.name }}
+                                    </a>
+                                </div>
+                            </td>
+                            <td>{{ result.scan.patient.age }} yrs &bull; {{ result.scan.patient.get_gender_display }}</td>
+                            <td><span class="badge bg-secondary-subtle text-secondary">{{ result.scan.scan_type }}</span></td>
+                            <td>
+                                {% if result.stroke_detected %}
+                                <span class="badge badge-stroke-detected">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Stroke
+                                </span>
+                                {% else %}
+                                <span class="badge badge-stroke-normal">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Normal
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if result.stroke_detected %}
+                                <span class="fw-bold small">{{ result.get_stroke_type_display }}</span>
+                                {% else %}
+                                <span class="text-muted small">None</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress" style="height: 8px; width: 60px; background-color: var(--border-color);">
+                                        <div class="progress-bar {% if result.confidence_score > 80 %}bg-success{% else %}bg-warning{% endif %}" 
+                                             role="progressbar" style="width: {{ result.confidence_score }}%"></div>
+                                    </div>
+                                    <span class="small fw-bold">{{ result.confidence_score|floatformat:0 }}%</span>
+                                </div>
+                            </td>
+                            <td class="small text-muted">{{ result.created_at|date:"M d, Y" }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'result_detail' result.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-file-earmark-medical"></i> View Report
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                No matching diagnosis results found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if page_obj.has_other_pages %}
+            <div class="p-3 border-top">
+                <nav>
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}">
+                                &laquo; Previous
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}{% if filter_type %}&filter={{ filter_type }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}">
+                                Next &raquo;
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

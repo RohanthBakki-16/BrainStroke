@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Physician Registration - NeuroScan AI{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-container-modern">
+        <!-- Clinical Info Panel -->
+        <div class="auth-showcase-panel">
+            <div>
+                <div class="auth-badge">
+                    <i class="bi bi-person-badge"></i> Practitioner Onboarding
+                </div>
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="brand-icon-wrapper" style="width: 52px; height: 52px; font-size: 1.75rem;">
+                        <i class="bi bi-activity"></i>
+                    </div>
+                    <div>
+                        <h2 class="mb-0 text-white fw-bold">NeuroScan <span style="color: #38bdf8;">AI</span></h2>
+                        <small class="text-secondary text-uppercase" style="letter-spacing: 0.1em; font-size: 0.75rem;">Medical AI System</small>
+                    </div>
+                </div>
+
+                <p class="text-light opacity-75 mb-4" style="line-height: 1.6;">
+                    Join healthcare teams leveraging automated acute stroke detection. Get access to neural segmentation and patient history tracking.
+                </p>
+
+                <ul class="auth-features-list">
+                    <li>
+                        <i class="bi bi-person-check-fill"></i>
+                        <div>
+                            <strong class="text-white d-block">Role-Based Access</strong>
+                            <small class="text-muted">Separate clinical workflows for Radiologists, Doctors & Administrators</small>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="bi bi-cloud-check-fill"></i>
+                        <div>
+                            <strong class="text-white d-block">Audit-Trail Logging</strong>
+                            <small class="text-muted">Diagnostic scans linked securely to registered medical accounts</small>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="pt-4 border-top border-secondary border-opacity-25">
+                <small class="text-muted">&copy; NeuroScan AI Clinical Informatics System</small>
+            </div>
+        </div>
+
+        <!-- Registration Form Panel -->
+        <div class="auth-form-panel d-flex flex-column justify-content-center">
+            <div class="mb-4">
+                <h3 class="fw-bold mb-1">Create Clinical Profile</h3>
+                <p class="text-muted small">Register to start analyzing patient brain MRI/CT scans</p>
+            </div>
+
+            <form method="POST" class="auth-form">
+                {% csrf_token %}
+
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <label for="first_name" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" required placeholder="e.g. Rohanth">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="last_name" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" required placeholder="e.g. Bakki">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input type="text" class="form-control" id="username" name="username" required placeholder="Choose a username">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Hospital / Clinical Email</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        <input type="email" class="form-control" id="email" name="email" required placeholder="physician@hospital.org">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="role" class="form-label">Clinical Role</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-briefcase"></i></span>
+                        <select class="form-select" id="role" name="role">
+                            <option value="doctor" selected>Doctor / Radiologist</option>
+                            <option value="admin">Administrator / Lead Neurologist</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-4">
+                    <div class="col-md-6">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="password" name="password" required minlength="8" placeholder="Min 8 chars">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="confirm_password" class="form-label">Confirm Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="8" placeholder="Repeat password">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 mb-3">
+                    <i class="bi bi-check2-circle"></i> Complete Registration
+                </button>
+            </form>
+
+            <div class="text-center pt-2 border-top">
+                <p class="text-muted small mb-0">
+                    Already registered? 
+                    <a href="{% url 'login' %}" class="fw-bold text-decoration-none ms-1">Sign in here &rarr;</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

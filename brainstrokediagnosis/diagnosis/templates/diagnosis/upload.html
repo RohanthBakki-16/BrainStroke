@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Scan - NeuroScan AI{% endblock %}
+
+{% block content %}
+<div class="upload-page">
+    <div class="mb-4">
+        <h1 class="page-title mb-1">
+            <i class="bi bi-cloud-arrow-up"></i> Ingest Brain MRI / CT Scan
+        </h1>
+        <p class="text-secondary mb-0">Upload patient neuroimaging for deep-learning stroke classification and infarct segmentation.</p>
+    </div>
+
+    <!-- Scanning Radar Modal (Shown on submit) -->
+    <div class="scanning-indicator-modal" id="scanningModal">
+        <div class="scanning-box">
+            <div class="scanning-radar"></div>
+            <h4 class="fw-bold mb-2 text-primary">Running AI Diagnostic Model</h4>
+            <p class="text-muted small mb-3" id="scanStatusMsg">Preprocessing DICOM/Image slices...</p>
+            <div class="progress" style="height: 6px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 100%"></div>
+            </div>
+            <small class="text-secondary d-block mt-3">Executing U-Net inference on brain parenchyma</small>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Form Column -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-person-badge"></i> Patient Demographics & Scan Ingestion</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                        {% csrf_token %}
+
+                        <!-- Patient Info Section -->
+                        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                            <i class="bi bi-person-fill text-primary"></i>
+                            <h6 class="mb-0 fw-bold">Patient Information</h6>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="patient_name" class="form-label">Full Patient Name *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                    <input type="text" class="form-control" id="patient_name" name="patient_name" required placeholder="e.g. John Doe">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="patient_age" class="form-label">Age *</label>
+                                <input type="number" class="form-control" id="patient_age" name="patient_age" min="1" max="150" required placeholder="e.g. 58">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="patient_gender" class="form-label">Gender *</label>
+                                <select class="form-select" id="patient_gender" name="patient_gender" required>
+                                    <option value="">Select</option>
+                                    <option value="M">Male</option>
+                                    <option value="F">Female</option>
+                                    <option value="O">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="patient_phone" class="form-label">Contact Number</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                    <input type="text" class="form-control" id="patient_phone" name="patient_phone" placeholder="+1 (555) 012-3456">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="patient_email" class="form-label">Email Address</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control" id="patient_email" name="patient_email" placeholder="patient@healthcare.net">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scan Ingestion Section -->
+                        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                            <i class="bi bi-image text-primary"></i>
+                            <h6 class="mb-0 fw-bold">Scan Modality & Neuroimaging Upload</h6>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="scan_type" class="form-label">Scan Modality *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-hospital"></i></span>
+                                    <select class="form-select" id="scan_type" name="scan_type" required>
+                                        <option value="">Choose Modality</option>
+                                        <option value="MRI" selected>MRI - Magnetic Resonance Imaging (T1/T2/FLAIR/DWI)</option>
+                                        <option value="CT">CT - Computed Tomography (Non-Contrast Head CT)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="notes" class="form-label">Clinical Indication / Notes</label>
+                                <input type="text" class="form-control" id="notes" name="notes" placeholder="e.g. Acute left-sided hemiparesis, onset 2.5h ago">
+                            </div>
+                        </div>
+
+                        <!-- Modern Upload Drop Area -->
+                        <div class="upload-area mb-4" id="uploadArea">
+                            <input type="file" id="scan_image" name="scan_image" accept="image/*" required hidden>
+                            
+                            <div class="upload-placeholder" id="uploadPlaceholder">
+                                <i class="bi bi-cloud-arrow-up"></i>
+                                <h4>Drag & Drop Brain Scan Image</h4>
+                                <p>or click to browse your local clinical workstation</p>
+                                <div class="d-inline-flex gap-2">
+                                    <span class="badge bg-secondary-subtle text-secondary">PNG</span>
+                                    <span class="badge bg-secondary-subtle text-secondary">JPEG / JPG</span>
+                                    <span class="badge bg-secondary-subtle text-secondary">DICOM / WebP</span>
+                                </div>
+                            </div>
+
+                            <div class="image-preview" id="imagePreview" style="display: none;">
+                                <img id="previewImg" src="" alt="Scan Preview">
+                                <button type="button" class="btn btn-danger btn-sm remove-image" id="removeImage">
+                                    <i class="bi bi-trash3-fill"></i> Replace
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex align-items-center gap-3">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                <i class="bi bi-cpu-fill"></i> Execute AI Stroke Analysis
+                            </button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-lg">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clinical Guidelines Side Card -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-info-circle-fill text-info"></i> Imaging Guidelines</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
+                        <li class="d-flex gap-2">
+                            <i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i>
+                            <div>
+                                <strong>Axial Plane Scans:</strong>
+                                <small class="text-secondary d-block">Recommended for optimal stroke detection and parenchymal symmetry evaluation.</small>
+                            </div>
+                        </li>
+                        <li class="d-flex gap-2">
+                            <i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i>
+                            <div>
+                                <strong>DWI & FLAIR Sequences:</strong>
+                                <small class="text-secondary d-block">Early ischemic changes show highest contrast on diffusion-weighted MRI sequences.</small>
+                            </div>
+                        </li>
+                        <li class="d-flex gap-2">
+                            <i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i>
+                            <div>
+                                <strong>Artifact Minimization:</strong>
+                                <small class="text-secondary d-block">Ensure motion artifacts and patient movement blur are minimal for high confidence.</small>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-shield-check text-success"></i> Regulatory Compliance</h5>
+                </div>
+                <div class="card-body text-secondary small">
+                    <p class="mb-2">
+                        NeuroScan AI operates as a Class II Clinical Decision Support Tool. Predictions should always be correlated with clinician assessment and patient vitals.
+                    </p>
+                    <div class="d-flex align-items-center gap-2 text-muted">
+                        <i class="bi bi-lock-fill"></i> Encrypted Ingestion Channel
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('scan_image');
+    const placeholder = document.getElementById('uploadPlaceholder');
+    const preview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+    const removeBtn = document.getElementById('removeImage');
+    const uploadForm = document.getElementById('uploadForm');
+    const scanningModal = document.getElementById('scanningModal');
+    const scanStatusMsg = document.getElementById('scanStatusMsg');
+
+    // Click to upload
+    uploadArea.addEventListener('click', (e) => {
+        if (e.target !== removeBtn && !removeBtn.contains(e.target)) {
+            fileInput.click();
+        }
+    });
+
+    // Drag and drop handlers
+    ['dragenter', 'dragover'].forEach(name => {
+        uploadArea.addEventListener(name, (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(name => {
+        uploadArea.addEventListener(name, (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+        });
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            handleFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFile(e.target.files[0]);
+        }
+    });
+
+    function handleFile(file) {
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                placeholder.style.display = 'none';
+                preview.style.display = 'inline-block';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.value = '';
+        previewImg.src = '';
+        preview.style.display = 'none';
+        placeholder.style.display = 'block';
+    });
+
+    // Form submission animation
+    uploadForm.addEventListener('submit', () => {
+        scanningModal.style.display = 'flex';
+        const msgs = [
+            "Normalizing scan voxel intensities...",
+            "Loading U-Net neural weights...",
+            "Calculating tissue attenuation & infarct masks...",
+            "Finalizing stroke classification..."
+        ];
+        let idx = 0;
+        setInterval(() => {
+            idx = (idx + 1) % msgs.length;
+            if (scanStatusMsg) scanStatusMsg.textContent = msgs[idx];
+        }, 600);
+    });
+</script>
+{% endblock %}

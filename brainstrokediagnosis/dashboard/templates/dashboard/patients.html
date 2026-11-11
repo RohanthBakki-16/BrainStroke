@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Patients Directory - NeuroScan AI{% endblock %}
+
+{% block content %}
+<div class="patients-page">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="page-title mb-1">
+                <i class="bi bi-people-fill"></i> Patient Master Registry
+            </h1>
+            <p class="text-secondary mb-0">Centralized electronic record of evaluated neurological patients.</p>
+        </div>
+        <a href="{% url 'upload_scan' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill"></i> Ingest New Patient Scan
+        </a>
+    </div>
+    
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-folder2-open text-primary"></i> Registered Patient Cohorts</h5>
+            <span class="badge bg-primary-subtle text-primary">{{ page_obj.paginator.count|default:0 }} Registered</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Patient Name</th>
+                            <th>Age</th>
+                            <th>Gender</th>
+                            <th>Phone Contact</th>
+                            <th>Email Address</th>
+                            <th>Scans Ingested</th>
+                            <th class="text-end">Patient Profile</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in page_obj %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="user-avatar-circle" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                                        {{ patient.name|make_list|first|upper }}
+                                    </div>
+                                    <div>
+                                        <a href="{% url 'patient_detail' patient.id %}" class="fw-bold text-decoration-none">
+                                            {{ patient.name }}
+                                        </a>
+                                        <div class="small text-muted">ID: #PT-{{ patient.id|stringformat:"04d" }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><strong>{{ patient.age }}</strong> yrs</td>
+                            <td>{{ patient.get_gender_display }}</td>
+                            <td class="text-muted">{{ patient.phone|default:"-" }}</td>
+                            <td class="text-muted">{{ patient.email|default:"-" }}</td>
+                            <td>
+                                <span class="badge bg-secondary-subtle text-secondary">
+                                    <i class="bi bi-images me-1"></i> {{ patient.scans.count }} Scans
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="{% url 'patient_detail' patient.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-person-vcard"></i> View Chart
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-people fs-1 d-block mb-2 opacity-50"></i>
+                                No patient records found in registry.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if page_obj.has_other_pages %}
+            <div class="p-3 border-top">
+                <nav>
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo; Previous</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next &raquo;</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

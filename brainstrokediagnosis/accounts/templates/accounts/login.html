@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}Clinical Sign In - NeuroScan AI{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-container-modern">
+        <!-- Clinical AI Showcase Panel -->
+        <div class="auth-showcase-panel">
+            <div>
+                <div class="auth-badge">
+                    <i class="bi bi-shield-check"></i> Medical Decision Support System
+                </div>
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="brand-icon-wrapper" style="width: 52px; height: 52px; font-size: 1.75rem;">
+                        <i class="bi bi-activity"></i>
+                    </div>
+                    <div>
+                        <h2 class="mb-0 text-white fw-bold">NeuroScan <span style="color: #38bdf8;">AI</span></h2>
+                        <small class="text-secondary text-uppercase" style="letter-spacing: 0.1em; font-size: 0.75rem;">Stroke Diagnostic Platform</small>
+                    </div>
+                </div>
+
+                <p class="text-light opacity-75 mb-4" style="line-height: 1.6;">
+                    Deep learning-driven automated cerebral infarct & hemorrhage segmentation system built for radiologists and acute care physicians.
+                </p>
+
+                <ul class="auth-features-list">
+                    <li>
+                        <i class="bi bi-cpu-fill"></i>
+                        <div>
+                            <strong class="text-white d-block">U-Net Neural Segmentation</strong>
+                            <small class="text-muted">Sub-second identification of ischemic & hemorrhagic strokes</small>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="bi bi-layers-fill"></i>
+                        <div>
+                            <strong class="text-white d-block">Multi-Modal CT & MRI Support</strong>
+                            <small class="text-muted">High-precision axial slice classification with confidence scoring</small>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="bi bi-file-earmark-medical-fill"></i>
+                        <div>
+                            <strong class="text-white d-block">Clinical PACS Workstation Ready</strong>
+                            <small class="text-muted">High-contrast radiology dark mode & printable case reports</small>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="pt-4 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                <small class="text-muted">Certified Radiology Research Demo</small>
+                <button type="button" class="theme-toggle-btn" id="loginThemeToggle" title="Toggle Dark/Light Mode">
+                    <i class="bi bi-moon-stars-fill"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Authentication Form Panel -->
+        <div class="auth-form-panel d-flex flex-column justify-content-center">
+            <div class="mb-4">
+                <h3 class="fw-bold mb-1">Physician Portal Login</h3>
+                <p class="text-muted small">Enter your clinical credentials to access patient scans</p>
+            </div>
+
+            <form method="POST" class="auth-form">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                        <input type="text" class="form-control" id="username" name="username" required placeholder="e.g. kiran_kumar" autofocus>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label for="password" class="form-label mb-0">Password</label>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                        <input type="password" class="form-control" id="password" name="password" required placeholder="Enter password">
+                        <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 mb-3">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In to Diagnostic Console
+                </button>
+            </form>
+
+            <div class="text-center pt-3 border-top">
+                <p class="text-muted small mb-0">
+                    New hospital staff member? 
+                    <a href="{% url 'register' %}" class="fw-bold text-decoration-none ms-1">Register Account &rarr;</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Password visibility toggle
+    const toggleBtn = document.getElementById('togglePasswordBtn');
+    const pwdInput = document.getElementById('password');
+    if (toggleBtn && pwdInput) {
+        toggleBtn.addEventListener('click', function() {
+            const isPassword = pwdInput.getAttribute('type') === 'password';
+            pwdInput.setAttribute('type', isPassword ? 'text' : 'password');
+            this.querySelector('i').classList.toggle('bi-eye');
+            this.querySelector('i').classList.toggle('bi-eye-slash');
+        });
+    }
+
+    // Login theme toggle button
+    const loginThemeToggle = document.getElementById('loginThemeToggle');
+    if (loginThemeToggle) {
+        loginThemeToggle.addEventListener('click', function() {
+            const activeTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = activeTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('neuroscan-theme', newTheme);
+            const icon = this.querySelector('i');
+            if (newTheme === 'dark') {
+                icon.className = 'bi bi-sun-fill';
+            } else {
+                icon.className = 'bi bi-moon-stars-fill';
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Case Report: {{ result.scan.patient.name }} - NeuroScan AI{% endblock %}
+
+{% block content %}
+<div class="result-page">
+    <!-- Action Header / Navigation -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 no-print">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <a href="{% url 'results' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> All Results
+                </a>
+                <span class="text-muted">/</span>
+                <span class="badge bg-secondary-subtle text-secondary">Case #{{ result.id }}</span>
+            </div>
+            <h1 class="page-title mb-0">
+                <i class="bi bi-clipboard2-pulse"></i> Diagnostic Radiology Report
+            </h1>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="bi bi-printer-fill"></i> Print Official Report
+            </button>
+            <a href="{% url 'upload_scan' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-plus-lg"></i> New Scan
+            </a>
+        </div>
+    </div>
+
+    <!-- Printable Hospital Header (Visible only when printed) -->
+    <div class="d-none print-header mb-4">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-3">
+            <div>
+                <h2 class="mb-0 fw-bold">NEUROSCAN AI &bull; CLINICAL RADIOLOGY REPORT</h2>
+                <small class="text-muted">Automated Cerebral Stroke Diagnostics & Neural Segmentation</small>
+            </div>
+            <div class="text-end">
+                <div class="fw-bold">CONFIDENTIAL MEDICAL DOCUMENT</div>
+                <small class="text-muted">Report ID: #{{ result.id }} | Generated: {% now "Y-m-d H:i" %}</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diagnostic Banner: Positive Stroke vs Normal Clearance -->
+    {% if result.stroke_detected %}
+    <div class="result-header-alert alert-stroke-positive">
+        <div class="d-flex align-items-center gap-3">
+            <div style="font-size: 2.5rem;"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div>
+                <h3 class="mb-0 fw-bold text-uppercase">ACUTE STROKE DETECTED</h3>
+                <p class="mb-0 opacity-90">
+                    Primary Classification: <strong>{{ result.get_stroke_type_display }}</strong> &bull; Requires immediate clinical correlation and neurology consultation.
+                </p>
+            </div>
+        </div>
+        <div class="text-end d-none d-md-block">
+            <div class="fs-4 fw-bold">{{ result.confidence_score|floatformat:1 }}%</div>
+            <small class="opacity-75">AI Confidence</small>
+        </div>
+    </div>
+    {% else %}
+    <div class="result-header-alert alert-stroke-negative">
+        <div class="d-flex align-items-center gap-3">
+            <div style="font-size: 2.5rem;"><i class="bi bi-check-circle-fill"></i></div>
+            <div>
+                <h3 class="mb-0 fw-bold text-uppercase">NORMAL SCAN - NO STROKE DETECTED</h3>
+                <p class="mb-0 opacity-90">
+                    Neural inference detected no acute ischemic infarcts or intracranial hemorrhages within evaluated slices.
+                </p>
+            </div>
+        </div>
+        <div class="text-end d-none d-md-block">
+            <div class="fs-4 fw-bold">{{ result.confidence_score|floatformat:1 }}%</div>
+            <small class="opacity-75">Clearance Confidence</small>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Radiology Dual-Viewer: Original Scan vs AI Segmentation Overlay -->
+    <div class="row g-4 mb-4">
+        <!-- Original Scan -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-image-fill"></i> Original Axial {{ result.scan.scan_type }} Scan</h5>
+                    <span class="badge bg-primary-subtle text-primary">{{ result.scan.scan_type }} Modality</span>
+                </div>
+                <div class="card-body p-2">
+                    <div class="result-image-box">
+                        {% if result.scan.image %}
+                        <img src="{{ result.scan.image.url }}" alt="Original Neuroimaging Scan" class="result-image">
+                        <span class="image-modality-badge">{{ result.scan.scan_type }} Original</span>
+                        {% else %}
+                        <div class="text-white text-center py-5">
+                            <i class="bi bi-file-earmark-x fs-1 d-block mb-2"></i>
+                            Scan image file unavailable
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Segmented Mask -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-layers-fill"></i> U-Net Lesion Segmentation Overlay</h5>
+                    <span class="badge bg-info-subtle text-info">AI Neural Output</span>
+                </div>
+                <div class="card-body p-2">
+                    <div class="result-image-box">
+                        {% if result.segmented_image %}
+                        <img src="{{ result.segmented_image.url }}" alt="AI Segmented Lesion Mask" class="result-image">
+                        <span class="image-modality-badge" style="color: #f43f5e; border-color: rgba(244, 63, 94, 0.4);">
+                            <i class="bi bi-bounding-box-circles me-1"></i> Segmented Lesions
+                        </span>
+                        {% else %}
+                        <div class="text-white text-center py-5">
+                            <i class="bi bi-shield-check fs-1 text-success d-block mb-2"></i>
+                            <span class="text-muted">No infarct mask generated (Normal / Non-stroke scan)</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clinical Case Details & Metrics Grid -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="bi bi-card-checklist"></i> Clinical Demographics & Evaluation Summary</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-sm-6 col-md-3">
+                    <div class="result-metric-card">
+                        <div class="result-metric-label">Patient Name</div>
+                        <div class="result-metric-value">
+                            <a href="{% url 'patient_detail' result.scan.patient.id %}" class="text-decoration-none">
+                                {{ result.scan.patient.name }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-md-3">
+                    <div class="result-metric-card">
+                        <div class="result-metric-label">Age & Gender</div>
+                        <div class="result-metric-value">
+                            {{ result.scan.patient.age }} yrs / {{ result.scan.patient.get_gender_display }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-md-3">
+                    <div class="result-metric-card">
+                        <div class="result-metric-label">Diagnosed Stroke Type</div>
+                        <div class="result-metric-value {% if result.stroke_detected %}text-danger{% else %}text-success{% endif %}">
+                            {% if result.stroke_detected %}
+                                {{ result.get_stroke_type_display }}
+                            {% else %}
+                                Normal (Clear)
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-md-3">
+                    <div class="result-metric-card">
+                        <div class="result-metric-label">Confidence Score</div>
+                        <div class="result-metric-value text-primary">
+                            {{ result.confidence_score|floatformat:1 }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confidence Meter -->
+            <div class="mt-3">
+                <label class="form-label d-flex justify-content-between mb-1">
+                    <span>Neural Probability Confidence:</span>
+                    <span class="fw-bold">{{ result.confidence_score|floatformat:1 }}%</span>
+                </label>
+                <div class="progress" style="height: 14px; background-color: var(--border-color); border-radius: 999px;">
+                    <div class="progress-bar {% if result.stroke_detected %}bg-danger{% else %}bg-success{% endif %} progress-bar-striped" 
+                         role="progressbar" style="width: {{ result.confidence_score }}%"></div>
+                </div>
+            </div>
+
+            <!-- Additional Metadata -->
+            <div class="row mt-4 pt-3 border-top g-3">
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Analysis Timestamp</small>
+                    <strong>{{ result.created_at|date:"M d, Y - H:i:s" }}</strong>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Attending Physician / User</small>
+                    <strong>{{ result.scan.uploaded_by.get_full_name|default:result.scan.uploaded_by.username }}</strong>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Clinical Indications</small>
+                    <span>{{ result.scan.notes|default:"No specific clinical indications recorded." }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Doctor Signature Section for Print Output -->
+    <div class="d-none print-header mt-5 pt-4">
+        <div class="row pt-5">
+            <div class="col-6">
+                <div class="border-top pt-2" style="width: 250px;">
+                    <strong>Attending Radiologist Signature</strong><br>
+                    <small class="text-muted">Dr. {{ request.user.get_full_name|default:request.user.username }}</small>
+                </div>
+            </div>
+            <div class="col-6 text-end">
+                <div class="border-top pt-2 ms-auto" style="width: 250px;">
+                    <strong>Verification Stamp / Date</strong><br>
+                    <small class="text-muted">{% now "F d, Y" %}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

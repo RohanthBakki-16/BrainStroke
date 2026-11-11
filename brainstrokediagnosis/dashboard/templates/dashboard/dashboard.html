@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}Clinical Dashboard - NeuroScan AI{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <!-- Header Banner -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="page-title mb-1">
+                <i class="bi bi-grid-1x2"></i> Diagnostic Dashboard
+            </h1>
+            <p class="text-secondary mb-0">
+                Welcome back, <strong class="text-primary">{{ request.user.get_full_name|default:request.user.username }}</strong>. Real-time stroke surveillance & AI segmentation metrics.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'upload_scan' %}" class="btn btn-primary">
+                <i class="bi bi-cloud-arrow-up"></i> Upload New Scan
+            </a>
+            <a href="{% url 'results' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-filter"></i> Filter Results
+            </a>
+        </div>
+    </div>
+
+    <!-- Stat Cards Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card stat-primary">
+                <div class="stat-icon">
+                    <i class="bi bi-journal-medical"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ total_scans }}</h3>
+                    <p>Total Scans Analyzed</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card stat-warning">
+                <div class="stat-icon">
+                    <i class="bi bi-exclamation-octagon"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ strokes_detected }}</h3>
+                    <p>Stroke Cases Detected</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card stat-success">
+                <div class="stat-icon">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ total_patients }}</h3>
+                    <p>Registered Patients</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card stat-info">
+                <div class="stat-icon">
+                    <i class="bi bi-calendar2-check-fill"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ scans_today }}</h3>
+                    <p>Scans Analyzed Today</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics & Recent Scans Row -->
+    <div class="row g-4 mb-4">
+        <!-- Stroke Subtype Analytics -->
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-pie-chart-fill"></i> Stroke Pathology Distribution</h5>
+                    <span class="badge bg-secondary-subtle text-secondary">Pathology Ratio</span>
+                </div>
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <!-- Ischemic -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold d-flex align-items-center gap-2">
+                                <span class="badge bg-danger rounded-circle p-1"></span> Ischemic Stroke (Clot)
+                            </span>
+                            <span class="fw-bold">{{ ischemic_count }} <small class="text-muted">cases</small></span>
+                        </div>
+                        <div class="progress" style="height: 12px; background-color: var(--border-color); border-radius: 999px;">
+                            {% if total_scans > 0 %}
+                            <div class="progress-bar bg-danger progress-bar-striped" role="progressbar" style="width: {% widthratio ischemic_count total_scans 100 %}%"></div>
+                            {% else %}
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 0%"></div>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted mt-1 d-block">Arterial occlusion causing acute cerebral ischemia</small>
+                    </div>
+
+                    <!-- Hemorrhagic -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold d-flex align-items-center gap-2">
+                                <span class="badge bg-warning rounded-circle p-1"></span> Hemorrhagic Stroke (Bleed)
+                            </span>
+                            <span class="fw-bold">{{ hemorrhagic_count }} <small class="text-muted">cases</small></span>
+                        </div>
+                        <div class="progress" style="height: 12px; background-color: var(--border-color); border-radius: 999px;">
+                            {% if total_scans > 0 %}
+                            <div class="progress-bar bg-warning progress-bar-striped" role="progressbar" style="width: {% widthratio hemorrhagic_count total_scans 100 %}%"></div>
+                            {% else %}
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted mt-1 d-block">Intracerebral or subarachnoid vessel rupture</small>
+                    </div>
+
+                    <div class="p-3 rounded-3 mt-auto" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color);">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
+                            <div class="small text-secondary">
+                                Automated deep learning segmentation trained on multi-center ischemic and hemorrhagic lesion datasets.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Diagnostic Results -->
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-clock-history"></i> Recent Case Evaluations</h5>
+                    <a href="{% url 'results' %}" class="btn btn-sm btn-outline-primary">View All Results</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Modality</th>
+                                    <th>Diagnostic Status</th>
+                                    <th>Confidence</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in recent_results %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="user-avatar-circle" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                                                {{ result.scan.patient.name|make_list|first|upper }}
+                                            </div>
+                                            <div>
+                                                <a href="{% url 'patient_detail' result.scan.patient.id %}" class="fw-bold text-decoration-none">
+                                                    {{ result.scan.patient.name }}
+                                                </a>
+                                                <div class="text-muted small">Age {{ result.scan.patient.age }} &bull; {{ result.scan.patient.get_gender_display }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary-subtle text-secondary">{{ result.scan.scan_type }}</span>
+                                    </td>
+                                    <td>
+                                        {% if result.stroke_detected %}
+                                        <span class="badge badge-stroke-detected">
+                                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Stroke: {{ result.get_stroke_type_display }}
+                                        </span>
+                                        {% else %}
+                                        <span class="badge badge-stroke-normal">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Normal
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress flex-grow-1" style="height: 8px; width: 60px; background-color: var(--border-color);">
+                                                <div class="progress-bar {% if result.confidence_score > 80 %}bg-success{% else %}bg-warning{% endif %}" 
+                                                     role="progressbar" style="width: {{ result.confidence_score }}%"></div>
+                                            </div>
+                                            <span class="small fw-bold">{{ result.confidence_score|floatformat:0 }}%</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{% url 'result_detail' result.id %}" class="btn btn-sm btn-outline-primary">
+                                            Review Case
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-2 d-block mb-1 opacity-50"></i>
+                                        No recent scan results recorded yet.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Navigation Hub -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="bi bi-lightning-charge-fill text-warning"></i> Clinical Quick Launch Hub</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <a href="{% url 'upload_scan' %}" class="btn btn-primary w-100 py-3 text-start d-flex align-items-center gap-3">
+                        <i class="bi bi-cloud-arrow-up fs-2"></i>
+                        <div>
+                            <div class="fw-bold">Upload MRI / CT Brain Scan</div>
+                            <small class="opacity-75">Initiate automated neural segmentation</small>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{% url 'results' %}" class="btn btn-outline-primary w-100 py-3 text-start d-flex align-items-center gap-3">
+                        <i class="bi bi-clipboard2-data fs-2"></i>
+                        <div>
+                            <div class="fw-bold">Diagnosis Archive</div>
+                            <small class="text-muted">Filter historical cases by stroke pathology</small>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{% url 'patients' %}" class="btn btn-outline-primary w-100 py-3 text-start d-flex align-items-center gap-3">
+                        <i class="bi bi-person-lines-fill fs-2"></i>
+                        <div>
+                            <div class="fw-bold">Patient Records Registry</div>
+                            <small class="text-muted">Manage patient demographics & histories</small>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
