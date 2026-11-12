@@ -6,6 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}NeuroScan AI - Brain Stroke Detection System{% endblock %}</title>
     
+    <!-- SEO & Meta Tags (Task 8: Google Search Visibility) -->
+    <meta name="description" content="NeuroScan AI is an AI-powered clinical decision support system for rapid brain stroke detection, automated cerebral infarct segmentation, and multi-modal MRI/CT classification.">
+    <meta name="keywords" content="Brain Stroke Detection, NeuroScan AI, Stroke Diagnosis, MRI Brain Scan Analysis, CT Brain Scan, U-Net Segmentation, Acute Ischemic Stroke, Intracranial Hemorrhage, Medical AI">
+    <meta name="author" content="NeuroScan AI">
+    <link rel="canonical" href="https://brainstroke-0w0m.onrender.com{{ request.path }}">
+
+    <!-- Indexing Directives: Allow public landing/login, strictly protect sensitive patient/clinical routes -->
+    {% if request.user.is_authenticated %}
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    {% else %}
+    <meta name="robots" content="index, follow">
+    {% endif %}
+
+    <!-- Open Graph & Social Cards -->
+    <meta property="og:title" content="{% block og_title %}NeuroScan AI - Brain Stroke Detection System{% endblock %}">
+    <meta property="og:description" content="Deep learning-driven automated cerebral infarct and hemorrhage segmentation platform for acute care physicians and radiologists.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://brainstroke-0w0m.onrender.com{{ request.path }}">
+    <meta property="og:site_name" content="NeuroScan AI">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="NeuroScan AI - Brain Stroke Detection System">
+    <meta name="twitter:description" content="AI-powered medical imaging analysis for rapid stroke detection and neural segmentation.">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

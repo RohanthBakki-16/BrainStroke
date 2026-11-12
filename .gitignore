@@ -1,0 +1,20 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+venv/
+env/
+.venv/
+
+# Local backups & scratch
+.backup/
+*.bak
+
+# Staticfiles collected during build
+staticfiles/
+
+# OS specific
+.DS_Store
+Thumbs.db

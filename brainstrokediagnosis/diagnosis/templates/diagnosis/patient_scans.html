@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Patient Scans: {{ patient.name }} - NeuroScan AI{% endblock %}
+
+{% block content %}
+<div class="patient-scans-page">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <a href="{% url 'patients' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> All Patients
+        </a>
+        <span class="text-muted">/</span>
+        <a href="{% url 'patient_detail' patient.id %}" class="btn btn-sm btn-outline-secondary">
+            Chart: {{ patient.name }}
+        </a>
+    </div>
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="page-title mb-1">
+                <i class="bi bi-images"></i> Scan Series for {{ patient.name }}
+            </h1>
+            <p class="text-secondary mb-0">Complete historical neuroimaging scans for Patient #PT-{{ patient.id|stringformat:"04d" }}</p>
+        </div>
+        <a href="{% url 'upload_scan' %}" class="btn btn-primary">
+            <i class="bi bi-cloud-arrow-up"></i> Upload New Scan
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-journal-medical text-primary"></i> Scan Diagnostic Records</h5>
+            <span class="badge bg-primary-subtle text-primary">{{ scans.count }} Records</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Scan ID</th>
+                            <th>Modality</th>
+                            <th>Thumbnail</th>
+                            <th>Diagnostic Finding</th>
+                            <th>Subtype</th>
+                            <th>Confidence</th>
+                            <th>Date</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scan in scans %}
+                        <tr>
+                            <td><strong>#SC-{{ scan.id|stringformat:"04d" }}</strong></td>
+                            <td><span class="badge bg-secondary-subtle text-secondary">{{ scan.scan_type }}</span></td>
+                            <td>
+                                {% if scan.image %}
+                                <img src="{{ scan.image.url }}" alt="Scan thumbnail" class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if scan.result.stroke_detected %}
+                                <span class="badge badge-stroke-detected">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Stroke
+                                </span>
+                                {% else %}
+                                <span class="badge badge-stroke-normal">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Normal
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if scan.result.stroke_detected %}
+                                <span class="fw-bold small">{{ scan.result.get_stroke_type_display }}</span>
+                                {% else %}
+                                <span class="text-muted small">None</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress" style="height: 8px; width: 60px; background-color: var(--border-color);">
+                                        <div class="progress-bar {% if scan.result.confidence_score > 80 %}bg-success{% else %}bg-warning{% endif %}" 
+                                             role="progressbar" style="width: {{ scan.result.confidence_score }}%"></div>
+                                    </div>
+                                    <span class="small fw-bold">{{ scan.result.confidence_score|floatformat:0 }}%</span>
+                                </div>
+                            </td>
+                            <td class="small text-muted">{{ scan.uploaded_at|date:"M d, Y" }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'result_detail' scan.result.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-file-earmark-medical"></i> View Report
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                No scans found for this patient.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

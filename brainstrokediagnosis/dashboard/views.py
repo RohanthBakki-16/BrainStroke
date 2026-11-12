@@ -1,8 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Avg
 from django.core.paginator import Paginator
-from datetime import datetime, timedelta
+from datetime import timedelta
+from django.utils import timezone
 
 from diagnosis.models import Patient, Scan, Result
 
@@ -17,7 +18,7 @@ def dashboard(request):
     ischemic_count = Result.objects.filter(stroke_type='Ischemic').count()
     hemorrhagic_count = Result.objects.filter(stroke_type='Hemorrhagic').count()
     
-    scans_today = Scan.objects.filter(uploaded_at__date=datetime.now().date()).count()
+    scans_today = Scan.objects.filter(uploaded_at__date=timezone.now().date()).count()
     
     context = {
         'total_scans': total_scans,
@@ -42,7 +43,7 @@ def all_patients(request):
 
 @login_required
 def patient_detail(request, patient_id):
-    patient = Patient.objects.get(id=patient_id)
+    patient = get_object_or_404(Patient, id=patient_id)
     scans = Scan.objects.filter(patient=patient).order_by('-uploaded_at')
     return render(request, 'dashboard/patient_detail.html', {'patient': patient, 'scans': scans})
 
@@ -85,7 +86,7 @@ def statistics(request):
     ischemic = Result.objects.filter(stroke_type='Ischemic').count()
     hemorrhagic = Result.objects.filter(stroke_type='Hemorrhagic').count()
     
-    last_30_days = datetime.now() - timedelta(days=30)
+    last_30_days = timezone.now() - timedelta(days=30)
     recent_scans = Scan.objects.filter(uploaded_at__gte=last_30_days).count()
     
     avg_confidence = Result.objects.aggregate(avg=Avg('confidence_score'))['avg'] or 0
@@ -98,6 +99,6 @@ def statistics(request):
         'ischemic': ischemic,
         'hemorrhagic': hemorrhagic,
         'recent_scans': recent_scans,
-        'avg_confidence': round(avg_confidence, 2),
+        'avg_confidence': round(avg_confidence, 1),
     }
     return render(request, 'dashboard/statistics.html', context)
