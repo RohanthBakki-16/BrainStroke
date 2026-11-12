@@ -48,6 +48,7 @@ urlpatterns = [
     path('dashboard/', include('dashboard.urls')),
     path('robots.txt', robots_txt, name='robots_txt'),
     path('sitemap.xml', sitemap_xml, name='sitemap_xml'),
-    # Media files serving in all environments
+    # Static and Media files serving fallbacks
+    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]

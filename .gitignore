@@ -12,9 +12,6 @@ env/
 .backup/
 *.bak
 
-# Staticfiles collected during build
-staticfiles/
-
 # OS specific
 .DS_Store
 Thumbs.db
